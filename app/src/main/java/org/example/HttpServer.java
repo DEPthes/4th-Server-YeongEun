@@ -1,44 +1,66 @@
 package org.example;
 
+import org.example.filter.SessionLoggingFilter;
+import org.example.listener.LoggingSessionListener;
+import org.example.servlet.LoginServlet;
+import org.example.servlet.UserServlet;
+import org.example.session.SessionManager;
+
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.*;
 
 public class HttpServer {
-    public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(8080);
-        Log.info("서버 시작: http://localhost:8080");
-
-        // 서블릿 매핑
+    public static void main(String[] args) {
+        ExecutorService threadPool = Executors.newFixedThreadPool(10); // 최대 10개 동시 처리
         Dispatcher dispatcher = new Dispatcher();
-        dispatcher.addServlet("/hello", new HelloServlet());
 
-        // 서버 종료시
+        SessionManager sessionManager = new SessionManager();
+        sessionManager.addListener(new LoggingSessionListener());
+
+        dispatcher.addFilter(new SessionLoggingFilter());
+        dispatcher.addServlet("/hello", new HelloServlet());
+        dispatcher.addServlet("/login", new LoginServlet(sessionManager));
+        dispatcher.addServlet("/user", new UserServlet(sessionManager));
+
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Log.info("서버 종료 중 - 서블릿 destroy 호출");
+            Log.info("Shutdown Hook 실행됨! destroyAll() 호출");
             dispatcher.destroyAll();
+            threadPool.shutdown();
         }));
 
-        while (true) {
-            try (Socket client = serverSocket.accept()) {
-                InputStream in = client.getInputStream();
-                OutputStream out = client.getOutputStream();
+        try (ServerSocket serverSocket = new ServerSocket(8080)) {
+            Log.info("서버 시작: http://localhost:8080");
 
-                HttpRequest request = new HttpRequest(in);
-                HttpResponse response = new HttpResponse();
-
-                Servlet servlet = dispatcher.getServlet(request.getPath());
-                if (servlet != null) {
-                    servlet.service(request, response);
-                } else {
-                    response.setStatus(404);
-                    response.setBody("404 Not Found");
+            while (true) {
+                try {
+                    Socket client = serverSocket.accept();
+                    threadPool.submit(() -> handleClient(client, dispatcher));
+                } catch (IOException e) {
+                    Log.error("클라이언트 연결 실패: " + e.getMessage());
                 }
-
-                out.write(response.toByteArray());
-                out.flush();
-            } catch (Exception e) {
-                Log.error("Error handling request: " + e.getMessage());
             }
+
+        } catch (IOException e) {
+            Log.error("서버 시작 실패: " + e.getMessage());
+        }
+    }
+
+    private static void handleClient(Socket client, Dispatcher dispatcher) {
+        try (client) {
+            InputStream in = client.getInputStream();
+            OutputStream out = client.getOutputStream();
+
+            HttpRequest request = new HttpRequest(in);
+            HttpResponse response = new HttpResponse();
+
+            dispatcher.service(request, response);
+
+            out.write(response.toByteArray());
+            out.flush();
+        } catch (Exception e) {
+            Log.error("요청 처리 중 예외: " + e.getMessage());
         }
     }
 }
