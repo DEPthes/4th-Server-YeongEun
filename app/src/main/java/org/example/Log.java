@@ -34,4 +34,8 @@ public class Log {
     public static void debug(String msg) {
         logger.fine(msg);
     }
+
+    public void init() {
+        logger.info("로그 초기화 완료");
+    }
 }

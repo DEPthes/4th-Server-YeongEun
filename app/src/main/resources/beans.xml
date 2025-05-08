@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+    <bean id="log" class="org.example.Log" init-method="init"/>
+
+    <bean id="helloServlet" class="org.example.servlet.HelloServlet">
+        <property name="log" ref="log"/>
+    </bean>
+
+    <bean id="loginServlet" class="org.example.servlet.LoginServlet">
+        <property name="sessionManager" ref="sessionManager"/>
+    </bean>
+
+    <bean id="userServlet" class="org.example.servlet.UserServlet">
+        <property name="sessionManager" ref="sessionManager"/>
+    </bean>
+
+    <bean id="sessionManager" class="org.example.session.SessionManager"/>
+</beans>

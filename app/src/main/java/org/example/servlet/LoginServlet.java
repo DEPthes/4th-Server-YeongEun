@@ -12,9 +12,11 @@ import java.util.Map;
 import java.util.UUID;
 
 public class LoginServlet implements Servlet {
-    private final SessionManager sessionManager;
+    private SessionManager sessionManager;
 
-    public LoginServlet(SessionManager sessionManager) {
+    public LoginServlet() {}
+
+    public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
 

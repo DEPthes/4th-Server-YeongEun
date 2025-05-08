@@ -4,9 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UserDb {
-    private static final UserDb instance = new UserDb(); // ✅ 유일한 인스턴스
-
     private final Map<String, Map<String, Object>> userDb = new HashMap<>();
+    private static final UserDb instance = new UserDb(); // 싱글톤
 
     private UserDb() {
     }

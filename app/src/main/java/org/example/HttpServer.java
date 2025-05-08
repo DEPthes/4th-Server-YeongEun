@@ -1,5 +1,6 @@
 package org.example;
 
+import org.example.DI.BeanFactory;
 import org.example.filter.SessionLoggingFilter;
 import org.example.listener.LoggingSessionListener;
 import org.example.servlet.LoginServlet;
@@ -19,9 +20,13 @@ public class HttpServer {
         sessionManager.addListener(new LoggingSessionListener());
 
         dispatcher.addFilter(new SessionLoggingFilter());
-        dispatcher.addServlet("/hello", new HelloServlet());
-        dispatcher.addServlet("/login", new LoginServlet(sessionManager));
-        dispatcher.addServlet("/user", new UserServlet(sessionManager));
+
+        BeanFactory factory = new BeanFactory();
+        factory.loadBeans("beans.xml");
+
+        dispatcher.addServlet("/hello", (Servlet) factory.getBean("helloServlet"));
+        dispatcher.addServlet("/user", (Servlet) factory.getBean("userServlet"));
+        dispatcher.addServlet("/login", (Servlet) factory.getBean("loginServlet"));
 
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

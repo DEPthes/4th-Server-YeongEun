@@ -10,9 +10,11 @@ import org.example.model.UserDb;
 import java.util.Map;
 
 public class UserServlet implements Servlet {
-    private final SessionManager sessionManager;
+    private SessionManager sessionManager;
 
-    public UserServlet(SessionManager sessionManager) {
+    public UserServlet() {}
+
+    public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
 
